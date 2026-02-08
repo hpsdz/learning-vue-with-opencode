@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue 实例创建与选项 - Lesson 01</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>{{ message }}</h1>
+        <p>这是我的第一个 Vue 应用！</p>
+    </div>
+
+    <script>
+        // 使用 createApp 创建 Vue 应用实例
+        const app = Vue.createApp({
+            // data 选项用于定义响应式数据
+            data() {
+                return {
+                    message: '你好，Vue！'
+                }
+            }
+            // 更多选项如 methods, computed, watch, components, template 等将在后续课程中学习
+        });
+
+        // 将应用实例挂载到 DOM 元素上
+        app.mount('#app');
+    </script>
+</body>
+</html>

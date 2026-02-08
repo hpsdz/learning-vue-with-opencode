@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据绑定 (Mustache 语法, v-bind) - Lesson 02</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .active-text {
+            font-weight: bold;
+            color: green;
+        }
+        .error-text {
+            text-decoration: line-through;
+            color: orange;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>{{ pageTitle }}</h2>
+        <p>纯文本绑定 (Mustache 语法): {{ rawHtml }}</p>
+        <p>HTML 绑定 (使用 v-html 指令): <span v-html="rawHtml"></span></p>
+
+        <hr>
+
+        <h3>`v-bind` 指令</h3>
+        <p>使用 `v-bind:href` 绑定链接属性:</p>
+        <a v-bind:href="link.url">{{ link.text }}</a>
+        <br>
+        <!-- v-bind 的简写形式是冒号 : -->
+        <p>使用 `:src` 和 `:alt` 绑定图片属性:</p>
+        <img :src="image.src" :alt="image.alt" width="100">
+
+        <hr>
+
+        <h3>动态绑定 class 和 style</h3>
+        <p :class="{'active-text': isActive, 'error-text': hasError}">这是动态绑定的 class。</p>
+        <p :style="styleObject">这是动态绑定的 style。</p>
+
+        <button @click="toggleActive">切换 active 状态</button>
+        <button @click="toggleError">切换 error 状态</button>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    pageTitle: 'Vue 数据绑定',
+                    rawHtml: '<span style="color: red;">这是一段红色文本。</span>',
+                    link: {
+                        url: 'https://cn.vuejs.org/',
+                        text: '访问 Vue 官方网站'
+                    },
+                    image: {
+                        src: 'https://vuejs.org/images/logo.png', // Vue logo
+                        alt: 'Vue Logo'
+                    },
+                    isActive: true,
+                    hasError: false,
+                    styleObject: {
+                        color: 'blue',
+                        fontSize: '20px'
+                    }
+                }
+            },
+            methods: {
+                toggleActive() {
+                    this.isActive = !this.isActive;
+                },
+                toggleError() {
+                    this.hasError = !this.hasError;
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

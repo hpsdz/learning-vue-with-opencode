@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>条件渲染 (v-if, v-show) - Lesson 03</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .box {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>条件渲染示例</h2>
+
+        <!-- v-if, v-else-if, v-else -->
+        <div class="box">
+            <h3>v-if / v-else-if / v-else</h3>
+            <p v-if="type === 'A'">Type A: 这段文本只在 type 为 'A' 时显示。</p>
+            <p v-else-if="type === 'B'">Type B: 这段文本只在 type 为 'B' 时显示。</p>
+            <p v-else>Type Other: 这段文本只在 type 既不是 'A' 也不是 'B' 时显示。</p>
+
+            <!-- 注意：这里我们使用了在 methods 中定义的函数来改变 type 的值 -->
+            <button @click="changeType('A')">显示 Type A</button>
+            <button @click="changeType('B')">显示 Type B</button>
+            <button @click="changeType('C')">显示 Type C</button>
+        </div>
+
+        <!-- v-show -->
+        <div class="box">
+            <h3>v-show</h3>
+            <p v-show="isVisible">这段文本使用 v-show，它总是渲染，只是通过 CSS display 属性切换显示。</p>
+            <!-- 同样，使用 methods 中的函数来切换 isVisible 的值 -->
+            <button @click="toggleVisible">切换 v-show 状态</button>
+        </div>
+
+        <hr>
+
+        <!-- v-if 和 v-show 的区别 -->
+        <div class="box">
+            <h3>v-if vs v-show</h3>
+            <p>v-if (DOM 元素被销毁/重建):</p>
+            <div v-if="showExpensiveComponent">
+                我在 v-if 条件下渲染，切换时会销毁/重建 DOM。
+            </div>
+            <p>v-show (DOM 元素保留，通过 display 属性切换):</p>
+            <div v-show="showExpensiveComponent">
+                我在 v-show 条件下渲染，切换时保留 DOM，只改变 CSS display 属性。
+            </div>
+            <!-- 使用 methods 中的函数来切换 showExpensiveComponent 的值 -->
+            <button @click="toggleExpensiveComponent">切换组件显示</button>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    type: 'A',
+                    isVisible: true,
+                    showExpensiveComponent: true
+                }
+            },
+            methods: { // 这就是 methods 选项，用于定义函数
+                changeType(newType) {
+                    // 通过 this 访问 data 中的属性
+                    this.type = newType;
+                },
+                toggleVisible() {
+                    this.isVisible = !this.isVisible;
+                },
+                toggleExpensiveComponent() {
+                    this.showExpensiveComponent = !this.showExpensiveComponent;
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
