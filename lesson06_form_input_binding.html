@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表单输入绑定 (v-model) - Lesson 06</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .box {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        input[type="text"], textarea, select {
+            display: block;
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 80%;
+        }
+        input[type="checkbox"], input[type="radio"] {
+            margin-right: 5px;
+        }
+        label {
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        pre {
+            background-color: #e9e9e9;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>表单输入绑定 (`v-model`) 示例</h2>
+
+        <!-- 1. 文本输入 -->
+        <div class="box">
+            <h3>文本输入 (text)</h3>
+            <label for="message">消息:</label>
+            <input type="text" id="message" v-model="message" placeholder="输入消息">
+            <p>输入内容: {{ message }}</p>
+        </div>
+
+        <!-- 2. 多行文本 -->
+        <div class="box">
+            <h3>多行文本 (textarea)</h3>
+            <label for="textareaMessage">多行消息:</label>
+            <textarea id="textareaMessage" v-model="textareaMessage" placeholder="输入多行消息"></textarea>
+            <p>输入内容: <pre>{{ textareaMessage }}</pre></p>
+        </div>
+
+        <!-- 3. 复选框 -->
+        <div class="box">
+            <h3>复选框 (checkbox)</h3>
+            <input type="checkbox" id="checkbox" v-model="checked">
+            <label for="checkbox">已选中: {{ checked }}</label>
+
+            <h4>多个复选框</h4>
+            <input type="checkbox" id="jack" value="Jack" v-model="checkedNames">
+            <label for="jack">Jack</label>
+            <input type="checkbox" id="john" value="John" v-model="checkedNames">
+            <label for="john">John</label>
+            <input type="checkbox" id="mike" value="Mike" v-model="checkedNames">
+            <label for="mike">Mike</label>
+            <p>选中的名字: {{ checkedNames }}</p>
+        </div>
+
+        <!-- 4. 单选按钮 -->
+        <div class="box">
+            <h3>单选按钮 (radio)</h3>
+            <input type="radio" id="one" value="One" v-model="picked">
+            <label for="one">One</label>
+            <br>
+            <input type="radio" id="two" value="Two" v-model="picked">
+            <label for="two">Two</label>
+            <p>选中了: {{ picked }}</p>
+        </div>
+
+        <!-- 5. 选择器 (单选) -->
+        <div class="box">
+            <h3>选择器 (select)</h3>
+            <label for="selected">选择一个:</label>
+            <select id="selected" v-model="selected">
+                <option disabled value="">请选择</option>
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+            </select>
+            <p>选择结果: {{ selected }}</p>
+        </div>
+
+        <!-- 6. 选择器 (多选) -->
+        <div class="box">
+            <h3>选择器 (select, 多选)</h3>
+            <label for="multiSelected">选择多个:</label>
+            <select id="multiSelected" v-model="multiSelected" multiple style="width: 100px;">
+                <option>X</option>
+                <option>Y</option>
+                <option>Z</option>
+            </select>
+            <p>选择结果: {{ multiSelected }}</p>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    message: '',
+                    textareaMessage: '',
+                    checked: false,
+                    checkedNames: [],
+                    picked: '',
+                    selected: '',
+                    multiSelected: []
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>事件处理 (v-on) - Lesson 05</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .box {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .counter-display {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .event-log {
+            margin-top: 10px;
+            border: 1px solid #eee;
+            padding: 5px;
+            max-height: 100px;
+            overflow-y: auto;
+            background-color: #f0f0f0;
+        }
+        .parent-div {
+            background-color: lightblue;
+            padding: 20px;
+            border: 1px solid blue;
+        }
+        .child-button {
+            background-color: lightcoral;
+            padding: 10px;
+            border: 1px solid red;
+        }
+        input {
+            padding: 5px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>事件处理 (`v-on` 或 `@`) 示例</h2>
+
+        <!-- 1. 基本使用 -->
+        <div class="box">
+            <h3>基本点击事件</h3>
+            <div class="counter-display">计数: {{ count }}</div>
+            <button v-on:click="increment">增加计数 (+1)</button>
+            <!-- @click 是 v-on:click 的简写 -->
+            <button @click="decrement">减少计数 (-1)</button>
+        </div>
+
+        <!-- 2. 事件传参 -->
+        <div class="box">
+            <h3>事件传参</h3>
+            <button @click="say('Hello Vue!')">打招呼</button>
+            <!-- 访问原生 DOM 事件对象 $event -->
+            <button @click="warn('Form cannot be submitted yet.', $event)">警告</button>
+        </div>
+
+        <!-- 3. 事件修饰符 -->
+        <div class="box">
+            <h3>事件修饰符</h3>
+            <div class="parent-div" @click="logEvent('父级 div 被点击')">
+                父级 Div
+                <button class="child-button" @click.stop="logEvent('子级按钮被点击 (阻止冒泡)')">
+                    子级按钮 (.stop)
+                </button>
+            </div>
+            <br>
+            <a href="https://cn.vuejs.org/" @click.prevent="logEvent('链接被点击 (阻止默认行为)')">阻止默认跳转的链接 (.prevent)</a>
+            <br>
+            <input @keyup.enter="submit" placeholder="按 Enter 键提交">
+            <br>
+            <input @click.once="logEvent('按钮只点击一次 (.once)')" type="button" value="只点击一次">
+            <div class="event-log">
+                <h4>事件日志:</h4>
+                <p v-for="(log, index) in eventLogs" :key="index">{{ log }}</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    count: 0,
+                    eventLogs: []
+                }
+            },
+            methods: {
+                increment() {
+                    this.count++;
+                },
+                decrement() {
+                    this.count--;
+                },
+                say(message) {
+                    alert(message);
+                    this.logEvent(`alert: ${message}`);
+                },
+                warn(message, event) {
+                    if (event) {
+                        event.preventDefault(); // 显式阻止默认行为 (如果需要)
+                        this.logEvent(`警告: ${message}, 原生事件类型: ${event.type}`);
+                    } else {
+                        this.logEvent(`警告: ${message}`);
+                    }
+                    alert(message);
+                },
+                submit() {
+                    this.logEvent('Enter 键按下，表单提交！');
+                    alert('表单已提交！');
+                },
+                logEvent(message) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    this.eventLogs.push(`${timestamp}: ${message}`);
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

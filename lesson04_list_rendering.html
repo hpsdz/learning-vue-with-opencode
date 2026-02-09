@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>列表渲染 (v-for) - Lesson 04</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .box {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        ul { list-style: none; padding: 0; }
+        li { background-color: #e0e0e0; margin-bottom: 5px; padding: 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>列表渲染 (v-for) 示例</h2>
+
+        <!-- 遍历数组 -->
+        <div class="box">
+            <h3>遍历数组 (item in items)</h3>
+            <ul>
+                <!-- :key 属性非常重要，它帮助 Vue 跟踪每个节点的身份 -->
+                <li v-for="item in items" :key="item.id">
+                    {{ item.message }}
+                </li>
+            </ul>
+            <button @click="addItem">添加新项</button>
+        </div>
+
+        <!-- 遍历数组 (item, index in items) -->
+        <div class="box">
+            <h3>遍历数组 (item, index in items)</h3>
+            <ul>
+                <li v-for="(item, index) in items" :key="item.id">
+                    {{ index }} - {{ item.message }}
+                </li>
+            </ul>
+        </div>
+
+        <!-- 遍历对象 (value, key, index in object) -->
+        <div class="box">
+            <h3>遍历对象 (value, key, index, name in object)</h3>
+            <ul>
+                <li v-for="(value, key, index, name) in myObject" :key="key">
+                    {{ index }}. {{ key }}: {{ value }}
+                </li>
+            </ul>
+        </div>
+
+        <!-- 整数迭代 (n in number) -->
+        <div class="box">
+            <h3>整数迭代 (n in number)</h3>
+            <span v-for="n in 5" :key="n">{{ n }} </span>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    items: [
+                        { id: 1, message: 'Apple' },
+                        { id: 2, message: 'Banana' },
+                        { id: 3, message: 'Cherry' }
+                    ],
+                    myObject: {
+                        title: 'Vue 学习',
+                        author: 'Opencode',
+                        year: 2026,
+                        name: 'Vue3'
+                    }
+                }
+            },
+            methods: {
+                addItem() {
+                    // 添加一个新项到数组，Vue 会自动响应式更新列表
+                    const newId = this.items.length > 0 ? Math.max(...this.items.map(item => item.id)) + 1 : 1;
+                    this.items.push({ id: newId, message: `New Item ${newId}` });
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
