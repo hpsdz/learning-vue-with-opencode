@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计算属性 (Computed Properties) 与侦听器 (Watchers) - Lesson 07</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .box {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        input {
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        span {
+            font-weight: bold;
+            color: blue;
+        }
+        .warning {
+            color: orange;
+            font-style: italic;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>计算属性 (Computed Properties) 与侦听器 (Watchers) 示例</h2>
+
+        <!-- 1. 计算属性 Computed Properties -->
+        <div class="box">
+            <h3>计算属性 - 简单示例</h3>
+            <p>原消息: {{ rawMessage }}</p>
+            <p>反转消息 (computed): <span>{{ reversedMessage }}</span></p>
+            <button @click="rawMessage = 'Hello Vue!'">改变原消息</button>
+        </div>
+
+        <div class="box">
+            <h3>计算属性 - 复杂示例 (购物车总价)</h3>
+            <ul>
+                <li v-for="item in cart" :key="item.id">
+                    {{ item.name }} - {{ item.price }}元 x {{ item.quantity }}
+                    <button @click="item.quantity++">+</button>
+                    <button @click="item.quantity--">-</button>
+                </li>
+            </ul>
+            <p>购物车总价 (computed): <span>{{ cartTotalPrice }} 元</span></p>
+        </div>
+
+        <div class="box">
+            <h3>计算属性 - Getter 与 Setter</h3>
+            <p>姓: <input type="text" v-model="firstName"></p>
+            <p>名: <input type="text" v-model="lastName"></p>
+            <p>全名 (computed with setter): <span>{{ fullName }}</span></p>
+            <button @click="fullName = 'Wang Xiaoming'">改变全名</button>
+        </div>
+
+        <!-- 2. 侦听器 Watchers -->
+        <div class="box">
+            <h3>侦听器 - 简单示例</h3>
+            <p>请随意输入: <input type="text" v-model="question"></p>
+            <p v-if="answer" :class="answerClass">{{ answer }}</p>
+            <p class="warning" v-if="question && !answer">正在思考...</p>
+        </div>
+
+        <div class="box">
+            <h3>侦听器 - 深度侦听与立即执行</h3>
+            <p>用户年龄: <input type="number" v-model="user.age"></p>
+            <p v-if="ageWarning" class="error">{{ ageWarning }}</p>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    rawMessage: '学习 Vue 很有趣！',
+                    cart: [
+                        { id: 1, name: 'T-shirt', price: 50, quantity: 1 },
+                        { id: 2, name: 'Jeans', price: 120, quantity: 2 },
+                        { id: 3, name: 'Shoes', price: 200, quantity: 1 }
+                    ],
+                    firstName: '张',
+                    lastName: '三',
+                    question: '',
+                    answer: '',
+                    answerClass: '',
+                    user: {
+                        name: '张三',
+                        age: 25
+                    },
+                    ageWarning: ''
+                }
+            },
+            computed: {
+                // 计算属性会自动缓存结果，只有当依赖的数据变化时才会重新计算
+                reversedMessage() {
+                    return this.rawMessage.split('').reverse().join('');
+                },
+                cartTotalPrice() {
+                    return this.cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                },
+                // 具有 getter 和 setter 的计算属性
+                fullName: {
+                    get() {
+                        return this.firstName + ' ' + this.lastName;
+                    },
+                    set(newValue) {
+                        const names = newValue.split(' ');
+                        this.firstName = names[0];
+                        this.lastName = names[names.length - 1];
+                    }
+                }
+            },
+            watch: {
+                // 当 question 数据变化时执行这个函数
+                question(newQuestion, oldQuestion) {
+                    // 模拟异步操作
+                    this.answer = ''; // 清空答案，表示正在思考
+                    this.answerClass = '';
+
+                    setTimeout(() => {
+                        if (newQuestion.includes('Vue')) {
+                            this.answer = 'Vue 是一个渐进式 JavaScript 框架。';
+                        } else if (newQuestion.includes('你好')) {
+                            this.answer = '你好！';
+                        } else if (newQuestion.length > 5 && !this.answer) {
+                            this.answer = '问题太复杂，我无法回答。';
+                            this.answerClass = 'error';
+                        } else {
+                            this.answer = '';
+                        }
+                    }, 500); // 模拟 0.5 秒的延迟
+                },
+                // 深度侦听对象属性
+                'user.age': { // 侦听 user 对象中的 age 属性
+                    handler(newAge, oldAge) {
+                        if (newAge < 0 || newAge > 120) {
+                            this.ageWarning = '年龄输入无效！';
+                        } else if (newAge < 18) {
+                            this.ageWarning = '年龄小于18岁。';
+                        } else {
+                            this.ageWarning = '';
+                        }
+                    },
+                    deep: true,     // 深度侦听对象内部属性的变化
+                    immediate: true // 立即执行一次侦听器，在组件加载时
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

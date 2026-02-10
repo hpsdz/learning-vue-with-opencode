@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组件基础 - Lesson 08</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .box {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 20px; }
+        h3 { color: #555; }
+        p { line-height: 1.6; }
+        .component-card {
+            background-color: #e0f7fa;
+            border: 1px solid #00bcd4;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .component-card h4 {
+            color: #00838f;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        .component-card p {
+            font-size: 0.9em;
+            color: #263238;
+        }
+        .button-group button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin-right: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button-group button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Vue 组件基础</h2>
+
+        <div class="box">
+            <h3>全局注册组件: MyButton</h3>
+            <!-- 使用全局注册的组件 -->
+            <my-button label="点击我 (全局组件)"></my-button>
+            <my-button label="再点击我 (全局组件)"></my-button>
+        </div>
+
+        <div class="box">
+            <h3>局部注册组件: GreetingCard (本例中通过 app.component 注册，但展示的是局部组件的特点)</h3>
+            <!-- 使用局部注册的组件 -->
+            <!-- 通过 Props 传递数据 -->
+            <greeting-card title="欢迎" message="学习 Vue 很开心！"></greeting-card>
+            <greeting-card title="通知" message="这是来自组件的问候！" author="Vue Guru"></greeting-card>
+            <!-- 使用 v-bind 动态绑定 props 对象 -->
+            <greeting-card v-bind="greetingProps"></greeting-card>
+        </div>
+
+        <div class="box">
+            <h3>组件的 data 必须是函数 (计数器示例)</h3>
+            <counter-component></counter-component>
+            <counter-component></counter-component>
+            <p>每个 CounterComponent 实例都有自己独立的计数器。</p>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    greetingProps: {
+                        title: '动态问候',
+                        message: '数据绑定到组件 props',
+                        author: 'Dynamic Vue'
+                    }
+                };
+            }
+            // 在实际的局部注册中，如果 app 是父组件，它的 components 选项会包含 GreetingCard
+            // 例如:
+            // components: {
+            //     GreetingCard: GreetingCardComponentDefinition // 这里的 GreetingCardComponentDefinition 是组件定义对象
+            // }
+        });
+
+        // 1. 全局注册组件 MyButton
+        // app.component() 方法用于全局注册组件。
+        // 第一个参数是组件的名称 (推荐使用 kebab-case，例如 my-button)。
+        // 第二个参数是组件的定义对象。
+        app.component('my-button', {
+            // 组件的模板：定义组件的 HTML 结构。
+            template: `
+                <button @click="handleClick">{{ label }}</button>
+            `,
+            // 组件的数据：data 必须是一个函数，返回一个对象。
+            // 这样每个组件实例都会有自己独立的数据副本。
+            data() {
+                return {
+                    clicks: 0
+                };
+            },
+            // 组件的 Props：用于从父组件接收数据。
+            // props 是一个数组或对象，声明了组件可以接受的属性。
+            props: ['label'],
+            // 组件的方法：与根实例的 methods 类似。
+            methods: {
+                handleClick() {
+                    this.clicks++;
+                    alert(`${this.label} 被点击了 ${this.clicks} 次！`);
+                }
+            }
+        });
+
+        // 2. 局部组件 GreetingCard 的定义（这里是为了演示局部注册的特点，但在本例中仍然用 app.component 注册以便在根实例模板中使用）
+        const GreetingCard = {
+            template: `
+                <div class="component-card">
+                    <h4>{{ title }}</h4>
+                    <p>{{ message }}</p>
+                    <p v-if="author">作者: {{ author }}</p>
+                </div>
+            `,
+            // props 验证：可以是一个数组，也可以是一个对象，用于更详细的类型和验证。
+            props: {
+                title: {
+                    type: String,
+                    required: true
+                },
+                message: {
+                    type: String,
+                    default: '无消息'
+                },
+                author: String // 简单类型验证
+            }
+        };
+
+        // 3. 计数器组件 CounterComponent 的定义
+        const CounterComponent = {
+            template: `
+                <div class="box">
+                    <h3>计数器组件</h3>
+                    <p>计数: {{ count }}</p>
+                    <div class="button-group">
+                        <button @click="count++">增加</button>
+                        <button @click="count--">减少</button>
+                    </div>
+                </div>
+            `,
+            // 组件的 data 必须是一个函数，返回一个对象
+            data() {
+                return {
+                    count: 0
+                };
+            }
+        };
+
+
+        app.mount('#app');
+
+        // 在这个示例中，为了在根实例的模板中使用 GreetingCard 和 CounterComponent，
+        // 我们也通过 app.component 进行了全局注册。
+        // 但重要的是理解局部注册的概念：当一个组件 A 需要使用组件 B 时，
+        // 在组件 A 的定义对象内部的 `components` 属性中注册组件 B，
+        // 那么组件 B 只能在组件 A 的模板中使用。
+        app.component('greeting-card', GreetingCard);
+        app.component('counter-component', CounterComponent);
+
+
+    </script>
+</body>
+</html>
