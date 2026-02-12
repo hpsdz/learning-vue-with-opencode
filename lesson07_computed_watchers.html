@@ -48,8 +48,8 @@
             <ul>
                 <li v-for="item in cart" :key="item.id">
                     {{ item.name }} - {{ item.price }}元 x {{ item.quantity }}
-                    <button @click="item.quantity++">+</button>
-                    <button @click="item.quantity--">-</button>
+                    <button @click="increase(item.id)">+</button>
+                    <button @click="decrease(item.id)">-</button>
                 </li>
             </ul>
             <p>购物车总价 (computed): <span>{{ cartTotalPrice }} 元</span></p>
@@ -118,6 +118,20 @@
                         this.firstName = names[0];
                         this.lastName = names[names.length - 1];
                     }
+                }
+            },
+            methods: {
+                decrease(id) {
+                    var cout_quantity = this.cart[id-1].quantity;
+                    if (cout_quantity >= 1) {
+                        this.cart[id-1].quantity--;
+                        return;
+                    } else {
+                        return;
+                    }
+                },
+                increase(id) {
+                    this.cart[id-1].quantity++;
                 }
             },
             watch: {

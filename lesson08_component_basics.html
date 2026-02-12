@@ -175,15 +175,10 @@
         };
 
 
-        app.mount('#app');
-
-        // 在这个示例中，为了在根实例的模板中使用 GreetingCard 和 CounterComponent，
-        // 我们也通过 app.component 进行了全局注册。
-        // 但重要的是理解局部注册的概念：当一个组件 A 需要使用组件 B 时，
-        // 在组件 A 的定义对象内部的 `components` 属性中注册组件 B，
-        // 那么组件 B 只能在组件 A 的模板中使用。
         app.component('greeting-card', GreetingCard);
         app.component('counter-component', CounterComponent);
+
+        app.mount('#app');
 
 
     </script>

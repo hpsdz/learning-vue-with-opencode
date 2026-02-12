@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生命周期钩子 (Lifecycle Hooks) - Lesson 09</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .box {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 20px; }
+        h3 { color: #555; }
+        p { line-height: 1.6; }
+        .lifecycle-log {
+            background-color: #e9e9e9;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .component-card {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Vue 生命周期钩子示例</h2>
+
+        <div class="box">
+            <h3>根实例生命周期</h3>
+            <p>计数器: {{ count }}</p>
+            <button @click="count++">增加计数</button>
+            <button @click="toggleChild = !toggleChild">切换子组件显示</button>
+            <button @click="unmountApp">卸载应用</button>
+
+            <div class="lifecycle-log">
+                <h4>根实例生命周期日志:</h4>
+                <p v-for="(log, index) in lifecycleLogs" :key="index">{{ log }}</p>
+            </div>
+        </div>
+
+        <div class="box" v-if="toggleChild">
+            <h3>子组件生命周期 (ChildComponent)</h3>
+            <child-component :message="childMessage"></child-component>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    count: 0,
+                    lifecycleLogs: [],
+                    toggleChild: true,
+                    childMessage: '来自父组件的消息'
+                };
+            },
+            // 根实例的生命周期钩子
+            beforeCreate() {
+                // 此时数据观测和事件/方法配置都还没开始
+                this.logLifecycle('根实例: beforeCreate - (数据和方法都不可用)');
+            },
+            created() {
+                // 此时数据观测、属性和方法都已初始化
+                this.logLifecycle('根实例: created - (数据和方法已初始化，但DOM未挂载)');
+                // 可以在这里访问 this.count, this.increment() 等
+            },
+            beforeMount() {
+                // 模板已编译成渲染函数，但尚未将渲染结果挂载到 DOM 上
+                this.logLifecycle('根实例: beforeMount - (模板已编译，但DOM未渲染)');
+            },
+            mounted() {
+                // 实例已被挂载到 DOM 上
+                this.logLifecycle('根实例: mounted - (DOM已渲染，可以进行DOM操作)');
+                // 此时可以进行 DOM 操作，例如访问 this.$el
+            },
+            beforeUpdate() {
+                // 响应式数据更新时调用，但在 DOM 重新渲染之前
+                this.logLifecycle('根实例: beforeUpdate - (数据更新，但DOM未重新渲染)');
+            },
+            updated() {
+                // 响应式数据更新时调用，并且 DOM 已经重新渲染完成
+                this.logLifecycle('根实例: updated - (DOM已重新渲染)');
+            },
+            beforeUnmount() {
+                // 实例销毁之前调用 (Vue 3 中 beforeDestroy 改名为 beforeUnmount)
+                this.logLifecycle('根实例: beforeUnmount - (实例被销毁前调用)');
+            },
+            unmounted() {
+                // 实例销毁之后调用 (Vue 3 中 destroyed 改名为 unmounted)
+                this.logLifecycle('根实例: unmounted - (实例已被销毁)');
+            },
+            methods: {
+                logLifecycle(message) {
+                    this.lifecycleLogs.push(`${new Date().toLocaleTimeString()} - ${message}`);
+                },
+                unmountApp() {
+                    // 卸载整个应用，会触发根实例的 beforeUnmount 和 unmounted 钩子
+                    app.unmount();
+                }
+            }
+        });
+
+        // 子组件定义
+        const ChildComponent = {
+            template: `
+                <div class="component-card">
+                    <h4>子组件</h4>
+                    <p>父组件消息: {{ message }}</p>
+                    <p>子组件内部计数: {{ childCount }}</p>
+                    <button @click="childCount++">增加子计数</button>
+                    <div class="lifecycle-log">
+                        <h5>子组件生命周期日志:</h5>
+                        <p v-for="(log, index) in childLifecycleLogs" :key="index">{{ log }}</p>
+                    </div>
+                </div>
+            `,
+            props: ['message'],
+            data() {
+                return {
+                    childCount: 0,
+                    childLifecycleLogs: []
+                };
+            },
+            // 子组件的生命周期钩子
+            beforeCreate() { this.logChildLifecycle('子组件: beforeCreate'); },
+            created() { this.logChildLifecycle('子组件: created'); },
+            beforeMount() { this.logChildLifecycle('子组件: beforeMount'); },
+            mounted() { this.logChildLifecycle('子组件: mounted'); },
+            beforeUpdate() { this.logChildLifecycle('子组件: beforeUpdate'); },
+            updated() { this.logChildLifecycle('子组件: updated'); },
+            beforeUnmount() { this.logChildLifecycle('子组件: beforeUnmount'); },
+            unmounted() { this.logChildLifecycle('子组件: unmounted'); },
+            methods: {
+                logChildLifecycle(message) {
+                    this.childLifecycleLogs.push(`${new Date().toLocaleTimeString()} - ${message}`);
+                }
+            }
+        };
+
+        // 注册子组件
+        app.component('child-component', ChildComponent);
+
+        // 挂载应用
+        app.mount('#app');
+    </script>
+</body>
+</html>
