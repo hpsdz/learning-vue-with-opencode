@@ -78,8 +78,9 @@
             },
             // 根实例的生命周期钩子
             beforeCreate() {
-                // 此时数据观测和事件/方法配置都还没开始
-                this.logLifecycle('根实例: beforeCreate - (数据和方法都不可用)');
+                // 此时数据观测和事件/方法配置都还没开始，this.data 和 this.methods 都不可用
+                // this.logLifecycle('根实例: beforeCreate - (数据和方法都不可用)'); // 无法在这里调用 logLifecycle
+                console.log('%c根实例: beforeCreate - (数据和方法都不可用)', 'color: grey;'); // 可以使用原生 console.log
             },
             created() {
                 // 此时数据观测、属性和方法都已初始化
@@ -100,8 +101,10 @@
                 this.logLifecycle('根实例: beforeUpdate - (数据更新，但DOM未重新渲染)');
             },
             updated() {
-                // 响应式数据更新时调用，并且 DOM 已经重新渲染完成
-                this.logLifecycle('根实例: updated - (DOM已重新渲染)');
+                // 使用 setTimeout 延迟日志记录，避免无限更新循环
+                setTimeout(() => {
+                    this.logChildLifecycle('子组件: updated');
+                }, 0);
             },
             beforeUnmount() {
                 // 实例销毁之前调用 (Vue 3 中 beforeDestroy 改名为 beforeUnmount)
@@ -144,7 +147,11 @@
                 };
             },
             // 子组件的生命周期钩子
-            beforeCreate() { this.logChildLifecycle('子组件: beforeCreate'); },
+            beforeCreate() {
+                // 此时数据观测和事件/方法配置都还没开始，this.data 和 this.methods 都不可用
+                // this.logChildLifecycle('子组件: beforeCreate'); // 无法在这里调用 logChildLifecycle
+                console.log('%c子组件: beforeCreate', 'color: grey;'); // 可以使用原生 console.log
+            },
             created() { this.logChildLifecycle('子组件: created'); },
             beforeMount() { this.logChildLifecycle('子组件: beforeMount'); },
             mounted() { this.logChildLifecycle('子组件: mounted'); },

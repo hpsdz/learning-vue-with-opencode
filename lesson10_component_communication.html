@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组件通信 (Props & Events) - Lesson 10</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .box {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 20px; }
+        h3 { color: #555; }
+        p { line-height: 1.6; }
+        .parent-comp {
+            border: 2px solid #28a745;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #e6ffe6;
+            border-radius: 5px;
+        }
+        .child-comp {
+            border: 2px solid #007bff;
+            padding: 15px;
+            margin-top: 15px;
+            background-color: #e0f2ff;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>组件通信 (Props & Events) 示例</h2>
+
+        <div class="box parent-comp">
+            <h3>父组件 (App 实例)</h3>
+            <p>父组件计数: {{ parentCounter }}</p>
+            <p>从子组件收到的消息: {{ messageFromChild }}</p>
+            <div>
+                <label>自定义问候语：</label>
+                <input type="text" v-model="input" placeholder="在这里输入">
+            </div>
+
+            <br>
+            <button @click="sendToChild()">发送</button>
+
+            <br>
+
+            <hr>
+
+            <!-- 使用子组件 -->
+            <!-- :initial-count="parentCounter" 通过 Props 向子组件传递数据 -->
+            <!-- @child-increment="handleChildIncrement" 监听子组件触发的自定义事件 -->
+            <!-- @send-message="handleMessageFromChild" 监听子组件发送的另一条消息 -->
+            <my-child-component
+                :initial-count="parentCounter"
+                :greeting="parentGreeting"
+                @child-increment="handleChildIncrement"
+                @send-message="handleMessageFromChild"
+            ></my-child-component>
+        </div>
+    </div>
+
+    <script>
+        // 子组件定义
+        const MyChildComponent = {
+            template: `
+                <div class="child-comp">
+                    <h4>子组件 (MyChildComponent)</h4>
+                    <p>父组件传递的问候: {{ greeting }}</p>
+                    <p>父组件传递的初始计数: {{ initialCount }}</p>
+                    <p>子组件内部计数: {{ childCounter }}</p>
+
+                    <button @click="incrementChild">增加子组件计数</button>
+                    <!-- 通过 $emit 触发自定义事件，通知父组件 -->
+                    <button @click="emitIncrementToParent">通知父组件增加计数</button>
+                    <button @click="emitMessageToParent">发送消息给父组件</button>
+                </div>
+            `,
+            // Props：接收父组件传递的数据
+            props: {
+                greeting: {
+                    type: String,
+                    required: true // 必须传递
+                },
+                initialCount: {
+                    type: Number,
+                    default: 0 // 提供默认值
+                }
+            },
+            data() {
+                return {
+                    // 子组件可以复制 prop 作为自己的初始数据，但不要直接修改 prop
+                    childCounter: this.initialCount
+                };
+            },
+            methods: {
+                incrementChild() {
+                    this.childCounter++;
+                },
+                emitIncrementToParent() {
+                    // $emit：子组件向父组件发送事件，并可以附带数据
+                    this.$emit('child-increment', this.childCounter); // 发送事件并附带当前子组件计数
+                },
+                emitMessageToParent() {
+                    this.$emit('send-message', '子组件向你问好！');
+                }
+            },
+            // Watcher 示例：当父组件的 initialCount 改变时，更新子组件的 childCounter
+            // 这是处理 Props 单向数据流的一种常见模式：如果 prop 变化需要影响子组件的内部状态
+            watch: {
+                initialCount(newVal) {
+                    this.childCounter = newVal;
+                }
+            }
+        };
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    parentCounter: 0,
+                    input: "",
+                    parentGreeting: "",
+                    messageFromChild: '暂无'
+                };
+            },
+            methods: {
+                // 父组件处理子组件发出的事件
+                handleChildIncrement(count) {
+                    this.parentCounter = count; // 更新父组件的计数为子组件的最新计数
+                    alert(`父组件收到子组件的增量事件，子组件计数为: ${count}`);
+                },
+                handleMessageFromChild(message) {
+                    this.messageFromChild = message;
+                    alert(`父组件收到子组件的消息: "${message}"`);
+                },
+                sendToChild() {
+                    this.parentGreeting = this.input;
+                }
+            }
+        });
+
+        // 注册子组件
+        app.component('my-child-component', MyChildComponent);
+
+        // 挂载应用
+        app.mount('#app');
+    </script>
+</body>
+</html>
