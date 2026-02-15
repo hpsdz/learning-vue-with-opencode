@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态组件 (Dynamic Components) - Lesson 12</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .box {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 20px; }
+        h3 { color: #555; }
+        p { line-height: 1.6; }
+        .component-container {
+            border: 1px dashed #999;
+            padding: 20px;
+            margin-top: 15px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #eaf7ff;
+            border-radius: 5px;
+        }
+        .component-container h4 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .tabs button {
+            padding: 10px 15px;
+            border: 1px solid #007bff;
+            background-color: #fff;
+            color: #007bff;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-right: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .tabs button.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .tabs button:hover:not(.active) {
+            background-color: #e0f2ff;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>动态组件 (Dynamic Components) 示例</h2>
+
+        <div class="box">
+            <h3>基本动态组件</h3>
+            <p>使用 Vue 内置的 `<component>` 元素，通过 `:is` 属性动态渲染组件。</p>
+
+            <div class="tabs">
+                <button
+                    v-for="(tab, index) in tabs"
+                    :key="tab.component"
+                    @click="currentTab = tab.component"
+                    :class="{ active: currentTab === tab.component }"
+                >{{ tab.name }}</button>
+            </div>
+
+            <div class="component-container">
+                <!-- :is 绑定到组件的名称字符串或组件的定义对象 -->
+                <component :is="currentTab"></component>
+            </div>
+        </div>
+
+        <div class="box">
+            <h3>使用 <code>&lt;keep-alive&gt;</code> 保持组件状态</h3>
+            <p>切换组件时，如果组件内部有状态（如输入框内容、计数器），默认情况下会被销毁重建。</p>
+            <p>使用 <code>&lt;keep-alive&gt;</code> 可以缓存不活动的组件实例，使其在切换时保持状态。</p>
+
+            <div class="tabs">
+                <button
+                    v-for="(tab, index) in tabs"
+                    :key="tab.component"
+                    @click="currentTabWithKeepAlive = tab.component"
+                    :class="{ active: currentTabWithKeepAlive === tab.component }"
+                >{{ tab.name }} (Keep-Alive)</button>
+            </div>
+
+            <div class="component-container">
+                <!-- 使用 <keep-alive> 包裹动态组件 -->
+                <keep-alive>
+                    <component :is="currentTabWithKeepAlive"></component>
+                </keep-alive>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定义三个简单的组件
+        const ComponentA = {
+            template: `
+                <div>
+                    <h4>组件 A</h4>
+                    <p>这是一个简单的组件 A。</p>
+                    <input type="text" v-model="message" placeholder="输入内容">
+                    <p>输入内容: {{ message }}</p>
+                </div>
+            `,
+            data() { return { message: 'Hello from A' }; },
+            created() { console.log('ComponentA created!'); },
+            unmounted() { console.log('ComponentA unmounted!'); }
+        };
+
+        const ComponentB = {
+            template: `
+                <div>
+                    <h4>组件 B</h4>
+                    <p>这是另一个简单的组件 B。</p>
+                    <p>计数: {{ count }} <button @click="count++">增加</button></p>
+                </div>
+            `,
+            data() { return { count: 0 }; },
+            created() { console.log('ComponentB created!'); },
+            unmounted() { console.log('ComponentB unmounted!'); }
+        };
+
+        const ComponentC = {
+            template: `
+                <div>
+                    <h4>组件 C</h4>
+                    <p>这是组件 C。</p>
+                    <p>当前时间: {{ currentTime }}</p>
+                </div>
+            `,
+            data() {
+                return {
+                    currentTime: new Date().toLocaleTimeString(),
+                    timer: null
+                };
+            },
+            created() {
+                console.log('ComponentC created!');
+                this.timer = setInterval(() => {
+                    this.currentTime = new Date().toLocaleTimeString();
+                }, 1000);
+            },
+            unmounted() {
+                console.log('ComponentC unmounted!');
+                clearInterval(this.timer); // 清理定时器，避免内存泄漏
+            }
+        };
+
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    currentTab: 'ComponentA', // 默认显示的组件
+                    currentTabWithKeepAlive: 'ComponentA', // 默认显示的组件
+                    tabs: [
+                        { name: '组件 A', component: 'ComponentA' },
+                        { name: '组件 B', component: 'ComponentB' },
+                        { name: '组件 C', component: 'ComponentC' }
+                    ]
+                };
+            }
+        });
+
+        // 全局注册组件
+        app.component('ComponentA', ComponentA);
+        app.component('ComponentB', ComponentB);
+        app.component('ComponentC', ComponentC);
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
