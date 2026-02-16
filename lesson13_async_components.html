@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异步组件 (Async Components) - Lesson 13</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .box {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 20px; }
+        h3 { color: #555; }
+        p { line-height: 1.6; }
+        .async-comp-wrapper {
+            border: 1px dashed #009688;
+            padding: 20px;
+            margin-top: 15px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #e0f2f1;
+            border-radius: 5px;
+        }
+        .async-comp-wrapper h4 {
+            color: #00796b;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .loading-message {
+            color: #888;
+            font-style: italic;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>异步组件 (Async Components) 示例</h2>
+
+        <div class="box">
+            <h3>基本异步组件</h3>
+            <p>点击按钮加载异步组件。异步组件通常用于按需加载代码，优化首屏加载时间。</p>
+            <button @click="showAsyncComponent = true">加载异步组件</button>
+
+            <div class="async-comp-wrapper">
+                <async-component v-if="showAsyncComponent"></async-component>
+                <p v-else class="loading-message">点击上方按钮加载组件...</p>
+            </div>
+        </div>
+
+        <div class="box">
+            <h3>带加载状态、错误状态和超时处理的异步组件</h3>
+            <p>这个异步组件展示了加载中、加载失败和超时的情况。</p>
+            <button @click="loadAdvancedAsyncComponent = true">加载高级异步组件</button>
+
+            <div class="async-comp-wrapper">
+                <advanced-async-component v-if="loadAdvancedAsyncComponent"></advanced-async-component>
+                <p v-else class="loading-message">点击上方按钮加载组件...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 定义一个需要异步加载的组件
+        const HeavyComponent = {
+            template: `
+                <div>
+                    <h4>异步加载的重量级组件</h4>
+                    <p>这个组件是按需加载的，只有在需要时才从服务器获取。</p>
+                    <p>当前时间: {{ currentTime }}</p>
+                </div>
+            `,
+            data() {
+                return { currentTime: new Date().toLocaleTimeString() };
+            },
+            created() {
+                console.log('HeavyComponent created!');
+            },
+            unmounted() {
+                console.log('HeavyComponent unmounted!');
+            }
+        };
+
+        // 2. 定义一个模拟加载失败的组件
+        const FailedComponent = {
+            template: `
+                <div>
+                    <h4>加载失败的组件</h4>
+                    <p class="error-message">很抱歉，组件加载失败了。</p>
+                </div>
+            `
+        };
+
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    showAsyncComponent: false,
+                    loadAdvancedAsyncComponent: false
+                };
+            },
+            components: {
+                // 异步组件的定义方式 - 函数返回一个 Promise
+                AsyncComponent: Vue.defineAsyncComponent(() => {
+                    // 模拟网络延迟加载组件
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve(HeavyComponent);
+                        }, 2000); // 延迟 2 秒加载
+                    });
+                }),
+                // 带选项的异步组件
+                AdvancedAsyncComponent: Vue.defineAsyncComponent({
+                    loader: () => {
+                        return new Promise((resolve, reject) => {
+                            setTimeout(() => {
+                                // 模拟随机成功或失败
+                                if (Math.random() > 0.3) { // 70% 成功
+                                    resolve(HeavyComponent);
+                                } else { // 30% 失败
+                                    reject(new Error('组件加载失败！'));
+                                }
+                            }, 3000); // 延迟 3 秒加载
+                        });
+                    },
+                    loadingComponent: {
+                        template: '<p class="loading-message">高级组件加载中...</p>'
+                    },
+                    errorComponent: FailedComponent,
+                    delay: 200, // 在显示 loadingComponent 之前等待 200ms
+                    timeout: 4000 // 如果在 4000ms 内未加载，则显示 errorComponent
+                })
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阶段性作业 02 - 选项卡界面</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .tab-buttons button {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #555;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab-buttons button:last-child {
+            margin-right: 0;
+        }
+        .tab-buttons button.active {
+            background-color: #007bff;
+            color: white;
+            border-bottom: 2px solid #007bff; /* Visual emphasis */
+            margin-bottom: -2px; /* Pull up to cover border */
+        }
+        .tab-buttons button:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
+        .tab-content {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 200px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 8px 8px;
+        }
+        .comp-style {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+            background-color: #eaf7ff;
+            border-radius: 5px;
+        }
+        .comp-style h3 { color: #007bff; margin-top: 0; }
+        .comp-style input { margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .comp-style p { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>动态选项卡界面</h1>
+
+        <div class="tab-buttons">
+            <!--
+                TODO 1: 使用 v-for 遍历 tabs 数据，渲染这些按钮。
+                每个按钮的文本应显示 tab.name。
+                绑定 @click 事件，调用 changeTab 方法，传入 tab.component 名称。
+                根据 currentTab === tab.component 动态绑定 'active' class。
+            -->
+            <button
+                v-for="(tab, index) in tabs"
+                :key="tab.component"
+                @click="changeTab(tab.component)"
+                :class="{ active: currentTab === tab.component}"
+            > {{ tab.name }} </button>
+        </div>
+
+        <div class="tab-content">
+            <!--
+                TODO 2: 使用 <keep-alive> 包裹 <component :is="...">。
+                <keep-alive> 用于缓存不活动的组件实例，保持它们的状态。
+                <component :is="..."> 用于动态渲染 currentTab 对应的组件。
+                确保 props 正确传递给动态组件（如果需要）。
+                例如：<keep-alive><component :is="currentTab" :data-from-parent="dataForTab2" @some-event="handleTab2Event"></component></keep-alive>
+            -->
+            <keep-alive>
+                <component :is="currentTab" :data-from-parent="dataForTab2" @tab2-message="handleTab2Event"></component>
+            </keep-alive>
+        </div>
+    </div>
+
+    <script>
+        // 定义 Tab 1 的内容组件 (将演示输入框内容和时间状态的保持)
+        const TabComponent1 = {
+            template: `
+                <div class="comp-style">
+                    <h3>Tab 1 内容</h3>
+                    <p>这是 Tab 1 的默认文本。</p>
+                    <input type="text" v-model="message" placeholder="输入一些内容...">
+                    <p>您输入了: {{ message }}</p>
+                    <p>当前时间: {{ currentTime }}</p>
+                </div>
+            `,
+            data() {
+                return {
+                    message: '',
+                    currentTime: new Date().toLocaleTimeString(),
+                    timer: null
+                };
+            },
+            created() {
+                console.log('TabComponent1 created!');
+                this.timer = setInterval(() => {
+                    this.currentTime = new Date().toLocaleTimeString();
+                }, 1000);
+            },
+            unmounted() {
+                console.log('TabComponent1 unmounted!');
+                clearInterval(this.timer);
+            },
+            // 被 <keep-alive> 缓存的组件独有的生命周期钩子
+            activated() { // 组件被激活时触发
+                console.log('TabComponent1 activated!');
+                // 确保定时器在组件激活时重新启动
+                if (!this.timer) {
+                    this.timer = setInterval(() => {
+                        this.currentTime = new Date().toLocaleTimeString();
+                    }, 1000);
+                }
+            },
+            deactivated() { // 组件失活时触发
+                console.log('TabComponent1 deactivated!');
+                // 停止定时器以节省资源，防止后台运行
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            }
+        };
+
+        // 定义 Tab 2 的内容组件 (将演示 Props 和 Events)
+        const TabComponent2 = {
+            // TODO 3: 定义一个 prop (例如 `dataFromParent`) 来接收父组件的数据。
+            // 确保定义其类型。
+            props: {
+                dataFromParent: String
+            }, // 待你填充
+            template: `
+                <div class="comp-style" style="border-left-color: #28a745; background-color: #e6ffe6;">
+                    <h3>Tab 2 内容</h3>
+                    <p>这里显示一个计数器。</p>
+                    <p>计数: {{ count }} <button @click="count++">增加计数</button></p>
+                    <!-- TODO 4: 使用 {{ }} 显示从父组件接收的数据 (例如 {{ dataFromParent }}) -->
+                    <p>从父组件收到的数据: {{ dataFromParent }}</p>
+                    <button @click="notifyParent">通知父组件</button>
+                </div>
+            `,
+            data() {
+                return {
+                    count: 0
+                };
+            },
+            methods: {
+                notifyParent() {
+                    // TODO 5: 子组件触发一个自定义事件 (例如 `notify-message`)，
+                    // 通知父组件一些信息 (例如 '来自 Tab 2 的消息' 或 `this.count`)。
+                    // 提示：使用 `this.$emit('event-name', payload)`。
+                    this.$emit('tab2-message', `来自 Tab 2 的消息，当前计数是: ${this.count}`);
+                    alert('Tab 2 已向父组件发送消息！');
+                }
+            },
+            created() { console.log('TabComponent2 created!'); },
+            unmounted() { console.log('TabComponent2 unmounted!'); }
+        };
+
+        // TODO 6: 定义 Tab 3 的内容组件 (异步组件)
+        // 这个组件将模拟异步加载，例如从服务器获取数据或代码分割
+        // 可以参考 lesson13 中的 HeavyComponent 或 AdvancedAsyncComponent 结构
+        const TabComponent3 = Vue.defineAsyncComponent(() => {
+            // 模拟一个网络请求的延迟
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve({
+                        template: `
+                            <div class="comp-style" style="border-left-color: #ffc107; background-color: #fffbe6;">
+                                <h3>Tab 3 内容 (异步加载)</h3>
+                                <p>这是通过异步加载方式呈现的组件。</p>
+                                <p>加载时间: {{ new Date().toLocaleTimeString() }}</p>
+                            </div>
+                        `,
+                        created() { console.log('TabComponent3 (Async) created!'); },
+                        unmounted() { console.log('TabComponent3 (Async) unmounted!'); }
+                    });
+                }, 1500); // 模拟 1.5 秒加载延迟
+            });
+        });
+
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    currentTab: 'TabComponent1', // 当前激活的选项卡组件名称
+                    // TODO 7: 定义一个数组来存储选项卡的信息 (name, component)。
+                    // 例如：`[{ name: '首页', component: 'TabComponent1' }, ...]`
+                    tabs: [
+                        { name: '首页', component: 'TabComponent1' },
+                        { name: '关于', component: 'TabComponent2' },
+                        { name: '更多', component: 'TabComponent3' }
+                    ],
+                    // TODO 8: 定义一个数据属性，用于向 TabComponent2 传递数据 (例如 `dataForTab2`)。
+                    // 示例：dataForTab2: '你好，Tab 2！'
+                    dataForTab2: '你好，Tab 2！'
+                };
+            },
+            methods: {
+                // TODO 9: 实现 changeTab 方法，接收一个参数 (例如 `tabName`)。
+                // 将 `currentTab` 的值更新为接收到的 `tabName`。
+                changeTab(tabName) {
+                    this.currentTab = tabName;
+                    console.log(`切换到: ${tabName}`);
+                },
+                // TODO 10: 实现处理 TabComponent2 发送事件的方法 (例如 `handleTab2Event`)。
+                // 接收子组件传递的数据，并可以弹窗显示或更新父组件的数据。
+                handleTab2Event(message) {
+                    alert(`父组件收到 Tab 2 的消息: ${message}`);
+                }
+            }
+        });
+
+        // 注册组件 (确保所有组件都已注册)
+        app.component('TabComponent1', TabComponent1);
+        app.component('TabComponent2', TabComponent2);
+        app.component('TabComponent3', TabComponent3); // 异步组件也是这样注册
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
