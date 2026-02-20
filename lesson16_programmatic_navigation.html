@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编程式导航 (router.push()) - Lesson 16</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Vue Router (使用 CDN 方式，Vue Router 4 版本) -->
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        nav {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #0056b3;
+        }
+        nav a.router-link-active {
+            color: #28a745;
+            border-bottom: 2px solid #28a745;
+        }
+        .view-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 150px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .page-content {
+            padding: 10px;
+            background-color: #eaf7ff;
+            border-left: 5px solid #007bff;
+            margin-bottom: 10px;
+        }
+        .button-group {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .button-group button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .button-group button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>编程式导航 (router.push())</h1>
+
+        <!-- 声明式导航链接 -->
+        <nav>
+            <router-link to="/">首页</router-link>
+            <router-link to="/products">产品列表</router-link>
+            <router-link to="/about">关于我们</router-link>
+        </nav>
+
+        <!-- 编程式导航按钮 -->
+        <div class="button-group">
+            <p>当前路径: <code>{{ $route.path }}</code></p>
+            <button @click="goToProducts">去产品列表 (push)</button>
+            <button @click="replaceToAbout">替换到关于我们 (replace)</button>
+            <button @click="goBack">后退 (go -1)</button>
+            <button @click="goForward">前进 (go 1)</button>
+            <button @click="goToHomePage">回首页 (push home)</button>
+            <button @click="goToProductsWithQuery">带查询参数去产品 (push)</button>
+        </div>
+
+        <div class="view-container">
+            <router-view></router-view>
+        </div>
+    </div>
+
+    <script>
+        // 定义路由组件
+        const Home = {
+            template: `
+                <div class="page-content">
+                    <h2>首页</h2>
+                    <p>欢迎来到主页。</p>
+                </div>
+            `
+        };
+
+        const Products = {
+            template: `
+                <div class="page-content">
+                    <h2>产品列表</h2>
+                    <p>这里是我们的产品。</p>
+                    <p>当前查询参数 (category): <strong>{{ $route.query.category || '无' }}</strong></p>
+                    <p>当前查询参数 (sort): <strong>{{ $route.query.sort || '无' }}</strong></p>
+                </div>
+            `
+        };
+
+        const About = {
+            template: `
+                <div class="page-content">
+                    <h2>关于我们</h2>
+                    <p>了解更多关于我们的信息。</p>
+                </div>
+            `
+        };
+
+        const routes = [
+            { path: '/', component: Home },
+            { path: '/products', component: Products, name: 'products' }, // 为路由添加名称
+            { path: '/about', component: About, name: 'about' }
+        ];
+
+        const router = VueRouter.createRouter({
+            history: VueRouter.createWebHashHistory(), // 使用 Hash 模式
+            routes
+        });
+
+        const app = Vue.createApp({
+            methods: {
+                goToProducts() {
+                    // 使用 router.push() 导航到新路由
+                    // 会向 history 栈添加一个新的条目
+                    this.$router.push('/products');
+                },
+                replaceToAbout() {
+                    // 使用 router.replace() 导航到新路由
+                    // 不会向 history 栈添加新条目，而是替换当前条目
+                    this.$router.replace('/about');
+                    // 也可以传递一个路由对象
+                    // this.$router.replace({ name: 'about' }); // 如果路由有 name
+                },
+                goBack() {
+                    // 使用 router.go() 在 history 栈中前进或后退
+                    // router.go(n) 相当于 window.history.go(n)
+                    this.$router.go(-1); // 后退一步
+                },
+                goForward() {
+                    this.$router.go(1); // 前进一步
+                },
+                goToHomePage() {
+                    // 也可以使用路由名称导航
+                    this.$router.push({ name: 'products', path: '/' });
+                },
+                goToProductsWithQuery() {
+                    // 使用路由对象导航，并传递查询参数
+                    this.$router.push({
+                        path: '/products',
+                        query: { category: 'electronics', sort: 'price' }
+                    });
+                }
+            }
+        });
+
+        app.use(router);
+        app.mount('#app');
+    </script>
+</body>
+</html>

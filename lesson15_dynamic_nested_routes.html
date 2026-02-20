@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态路由匹配与嵌套路由 - Lesson 15</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Vue Router (使用 CDN 方式，Vue Router 4 版本) -->
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        nav {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #0056b3;
+        }
+        nav a.router-link-active { /* Vue Router 会自动给当前激活的链接添加这个 class */
+            color: #28a745;
+            border-bottom: 2px solid #28a745;
+        }
+        .view-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 150px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .page-content {
+            padding: 10px;
+            background-color: #eaf7ff;
+            border-left: 5px solid #007bff;
+            margin-bottom: 10px;
+        }
+        .user-detail {
+            background-color: #fff;
+            padding: 15px;
+            margin-top: 10px;
+            border: 1px dashed #007bff;
+            border-radius: 5px;
+        }
+        .user-nav {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .user-nav a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #ff9800; /* 橙色 */
+            font-weight: bold;
+        }
+        .user-nav a.router-link-active {
+            border-bottom: 2px solid #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>动态路由匹配与嵌套路由</h1>
+
+        <nav>
+            <router-link to="/">首页</router-link>
+            <router-link to="/users">用户列表</router-link>
+            <!-- 动态路由链接示例 -->
+            <router-link to="/users/123">用户 123 详情</router-link>
+            <router-link to="/users/456">用户 456 详情</router-link>
+        </nav>
+
+        <div class="view-container">
+            <router-view></router-view>
+        </div>
+    </div>
+
+    <script>
+        // 根组件 (Home)
+        const Home = {
+            template: `
+                <div class="page-content">
+                    <h2>首页</h2>
+                    <p>欢迎来到主页！这里可以查看用户列表。</p>
+                </div>
+            `
+        };
+
+        // 用户列表组件
+        const UserList = {
+            template: `
+                <div class="page-content">
+                    <h2>用户列表</h2>
+                    <ul>
+                        <li><router-link to="/users/1">用户 1</router-link></li>
+                        <li><router-link to="/users/2">用户 2</router-link></li>
+                        <li><router-link to="/users/3">用户 3</router-link></li>
+                    </ul>
+                </div>
+            `
+        };
+
+        // 用户详情父组件 (包含嵌套路由的 <router-view>)
+        const UserDetail = {
+            template: `
+                <div class="page-content user-detail">
+                    <h3>用户详情页面</h3>
+                    <!-- 通过 $route.params 访问动态路由参数 -->
+                    <p>当前用户 ID: {{ $route.params.id }}</p>
+                    <nav class="user-nav">
+                        <!-- 嵌套路由链接 (相对路径) -->
+                        <router-link :to="{ path: 'profile' }">用户资料</router-link>
+                        <router-link :to="{ path: 'posts' }">用户帖子</router-link>
+                    </nav>
+                    <!-- 嵌套路由的出口：子路由组件将渲染在这里 -->
+                    <router-view></router-view>
+                </div>
+            `
+        };
+
+        // 用户资料子组件
+        const UserProfile = {
+            template: `
+                <div style="background-color: #f0f8ff; padding: 10px; margin-top: 10px; border-left: 3px solid #007bff;">
+                    <h4>用户资料</h4>
+                    <p>姓名: 张三 (ID: {{ $route.params.id }})</p>
+                    <p>邮箱: user{{ $route.params.id }}@example.com</p>
+                </div>
+            `
+        };
+
+        // 用户帖子子组件
+        const UserPosts = {
+            template: `
+                <div style="background-color: #f0f8ff; padding: 10px; margin-top: 10px; border-left: 3px solid #007bff;">
+                    <h4>用户帖子</h4>
+                    <ul>
+                        <li>用户 {{ $route.params.id }} 的帖子 1</li>
+                        <li>用户 {{ $route.params.id }} 的帖子 2</li>
+                    </ul>
+                </div>
+            `
+        };
+
+        // 2. 定义路由表
+        const routes = [
+            { path: '/', component: Home },
+            { path: '/users', component: UserList },
+            // 动态路由匹配: /users/:id
+            // :id 是一个路由参数，会以 $route.params.id 的形式在组件中访问
+            {
+                path: '/users/:id', // 动态路由参数
+                component: UserDetail, // 父组件
+                // 嵌套路由：当 /users/:id 匹配成功时，UserDetail 会被渲染。
+                // 它的 children 路由会在 UserDetail 的 <router-view> 中渲染。
+                children: [
+                    // 当 /users/:id/profile 匹配成功时，UserProfile 会渲染在 UserDetail 的 <router-view> 中
+                    { path: 'profile', component: UserProfile }, // 相对路径 'profile' 相当于 /users/:id/profile
+                    // 当 /users/:id/posts 匹配成功时，UserPosts 会渲染在 UserDetail 的 <router-view> 中
+                    { path: 'posts', component: UserPosts }    // 相对路径 'posts' 相当于 /users/:id/posts
+                ]
+            }
+        ];
+
+        const router = VueRouter.createRouter({
+            history: VueRouter.createWebHashHistory(),
+            routes
+        });
+
+        const app = Vue.createApp({});
+        app.use(router);
+        app.mount('#app');
+    </script>
+</body>
+</html>

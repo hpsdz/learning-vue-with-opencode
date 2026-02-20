@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Router 安装与基本使用 - Lesson 14</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Vue Router (使用 CDN 方式，Vue Router 4 版本) -->
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        nav {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #0056b3;
+        }
+        nav a.router-link-active { /* Vue Router 会自动给当前激活的链接添加这个 class */
+            color: #28a745;
+            border-bottom: 2px solid #28a745;
+        }
+        .view-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 150px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .page-content {
+            padding: 10px;
+            background-color: #eaf7ff;
+            border-left: 5px solid #007bff;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Vue Router 基本使用</h1>
+
+        <!-- 路由导航链接 -->
+        <nav>
+            <!-- router-link 用于声明式导航，to 属性指定目标路径 -->
+            <router-link to="/">首页</router-link>
+            <router-link to="/about">关于我们</router-link>
+            <router-link to="/contact">联系我们</router-link>
+        </nav>
+
+        <!-- 路由出口：路由匹配到的组件将渲染在这里 -->
+        <div class="view-container">
+            <router-view></router-view>
+        </div>
+    </div>
+
+    <script>
+        // 1. 定义路由组件
+        const Home = {
+            template: `
+                <div class="page-content">
+                    <h2>首页</h2>
+                    <p>欢迎来到我们的主页！</p>
+                </div>
+            `
+        };
+
+        const About = {
+            template: `
+                <div class="page-content">
+                    <h2>关于我们</h2>
+                    <p>我们是一家致力于 Vue.js 学习的组织。</p>
+                </div>
+            `
+        };
+
+        const Contact = {
+            template: `
+                <div class="page-content">
+                    <h2>联系我们</h2>
+                    <p>电话: 123-456-7890</p>
+                    <p>邮箱: info@example.com</p>
+                </div>
+            `
+        };
+
+        // 2. 定义路由表
+        // 这是一个数组，每个元素都是一个路由记录 (route record)
+        const routes = [
+            { path: '/', component: Home },      // 当路径为 '/' 时，渲染 Home 组件
+            { path: '/about', component: About },  // 当路径为 '/about' 时，渲染 About 组件
+            { path: '/contact', component: Contact } // 当路径为 '/contact' 时，渲染 Contact 组件
+        ];
+
+        // 3. 创建路由实例
+        const router = VueRouter.createRouter({
+            // history 模式，使用 HTML5 History API，去除 URL 中的哈希 #
+            // 部署时需要服务器配置，以便在直接访问 /about 时能返回 index.html
+            history: VueRouter.createWebHashHistory(),
+            routes // `routes: routes` 的缩写
+        });
+
+        // 4. 创建 Vue 应用实例
+        const app = Vue.createApp({
+            // 根组件可以有自己的 data, methods 等，这里暂时为空
+        });
+
+        // 5. 将路由实例挂载到 Vue 应用实例上
+        // app.use() 方法用于安装 Vue 插件，Vue Router 就是一个插件
+        app.use(router);
+
+        // 6. 挂载 Vue 应用到 DOM
+        app.mount('#app');
+    </script>
+</body>
+</html>

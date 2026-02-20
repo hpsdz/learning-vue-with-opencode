@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路由守卫 (Navigation Guards) - Lesson 17</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Vue Router (使用 CDN 方式，Vue Router 4 版本) -->
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        nav {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #0056b3;
+        }
+        nav a.router-link-active {
+            color: #28a745;
+            border-bottom: 2px solid #28a745;
+        }
+        .view-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 150px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .page-content {
+            padding: 10px;
+            background-color: #eaf7ff;
+            border-left: 5px solid #007bff;
+            margin-bottom: 10px;
+        }
+        .login-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            text-align: center;
+        }
+        .login-form input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-form button {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .login-form button:hover {
+            background-color: #218838;
+        }
+        .logout-button {
+            background-color: #dc3545 !important;
+        }
+        .logout-button:hover {
+            background-color: #c82333 !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>路由守卫 (Navigation Guards)</h1>
+
+        <nav>
+            <router-link to="/">首页</router-link>
+            <router-link to="/public">公开页面</router-link>
+            <router-link to="/private">需要登录的页面</router-link>
+            <router-link to="/admin">管理员页面</router-link>
+            <router-link to="/posts/123/edit">编辑帖子 (组件内守卫)</router-link>
+        </nav>
+
+        <div class="login-form">
+            <template v-if="!isLoggedIn">
+                <p>模拟登录</p>
+                <input type="text" placeholder="用户名" v-model="username">
+                <input type="password" placeholder="密码" v-model="password">
+                <button @click="login">登录</button>
+            </template>
+            <template v-else>
+                <p>已登录为: {{ username }}</p>
+                <button class="logout-button" @click="logout">退出登录</button>
+            </template>
+        </div>
+
+        <div class="view-container">
+            <router-view></router-view>
+        </div>
+    </div>
+
+    <script>
+        // 模拟登录状态和权限 (这里使用全局变量，实际项目中会用状态管理库如 Vuex/Pinia)
+        let isAuthenticated = false;
+        let isAdmin = false;
+
+        // 定义路由组件
+        const Home = {
+            template: `<div class="page-content"><h2>首页</h2><p>这是一个公共主页。</p></div>`
+        };
+        const PublicPage = {
+            template: `<div class="page-content"><h2>公开页面</h2><p>任何人都可以访问。</p></div>`
+        };
+        const PrivatePage = {
+            template: `<div class="page-content"><h2>需要登录的页面</h2><p>只有登录用户才能看到。</p></div>`
+        };
+        const AdminPage = {
+            template: `<div class="page-content"><h2>管理员页面</h2><p>只有管理员才能访问。</p></div>`
+        };
+        const PostEdit = {
+            template: `
+                <div class="page-content">
+                    <h2>编辑帖子 ID: {{ $route.params.id }}</h2>
+                    <p>这是一个组件内守卫的演示页面。</p>
+                    <p>修改内容: <input type="text" v-model="content" @input="saved = false"></p>
+                    <button @click="save">保存</button>
+                </div>
+            `,
+            data() {
+                return {
+                    content: '原始帖子内容',
+                    saved: true // 模拟保存状态
+                };
+            },
+            methods: {
+                save() {
+                    alert('内容已保存！');
+                    this.saved = true;
+                }
+            },
+            // 组件内路由守卫
+            // beforeRouteLeave 会在离开当前组件路由前调用
+            beforeRouteLeave(to, from, next) {
+                // 如果有未保存的更改
+                if (!this.saved) {
+                    const answer = window.confirm('你确定要离开吗？你有未保存的更改！');
+                    if (answer) {
+                        next(); // 确认离开
+                    } else {
+                        next(false); // 取消离开，停留在当前页面
+                    }
+                } else {
+                    next(); // 没有未保存的更改，直接离开
+                }
+            }
+            // beforeRouteEnter(to, from, next) {
+            //     console.log('组件内守卫: beforeRouteEnter');
+            //     // 无法访问 this，因为组件实例还没被创建
+            //     next(vm => {
+            //         // 通过 vm 访问组件实例
+            //         console.log('beforeRouteEnter 回调中访问组件实例', vm.content);
+            //     });
+            // },
+            // beforeRouteUpdate(to, from, next) {
+            //     console.log('组件内守卫: beforeRouteUpdate');
+            //     // 路由参数变化时复用组件，例如从 /posts/1/edit 到 /posts/2/edit
+            //     next();
+            // }
+        };
+
+        const routes = [
+            { path: '/', component: Home },
+            { path: '/public', component: PublicPage },
+            {
+                path: '/private',
+                component: PrivatePage,
+                meta: { requiresAuth: true } // 路由元信息，用于判断是否需要认证
+            },
+            {
+                path: '/admin',
+                component: AdminPage,
+                meta: { requiresAuth: true, requiresAdmin: true } // 需要认证和管理员权限
+            },
+            {
+                path: '/posts/:id/edit',
+                component: PostEdit,
+                meta: { requiresAuth: true, title: '编辑帖子' } // 组件内守卫页面
+            }
+        ];
+
+        const router = VueRouter.createRouter({
+            history: VueRouter.createWebHashHistory(), // 使用 Hash 模式
+            routes
+        });
+
+        // =========================================================
+        // 全局前置守卫 (Global Before Guards)
+        // 在任何导航被确认之前调用
+        router.beforeEach((to, from, next) => {
+            console.log('全局前置守卫:', from.path, '->', to.path);
+            // 检查是否需要登录
+            if (to.meta.requiresAuth && !isAuthenticated) {
+                alert('该页面需要登录才能访问！');
+                next('/public'); // 重定向到公开页面或登录页
+            } else if (to.meta.requiresAdmin && !isAdmin) {
+                alert('该页面需要管理员权限才能访问！');
+                next(from.path); // 重定向回原页面
+            } else {
+                next(); // 继续导航
+            }
+        });
+
+        // 全局后置钩子 (Global After Hooks)
+        // 导航被确认之后调用，不接收 next 函数
+        router.afterEach((to, from) => {
+            console.log('全局后置钩子:', from.path, '->', to.path, '导航完成');
+            // 可以用于发送日志、修改页面标题等
+            // 如果路由元信息中有 title，则使用，否则根据路径生成
+            document.title = to.meta.title || (to.path === '/' ? '首页' : to.path.substring(1).toUpperCase());
+        });
+        // =========================================================
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    username: '',
+                    password: '',
+                    isLoggedIn: isAuthenticated // 从模拟状态初始化
+                };
+            },
+            methods: {
+                login() {
+                    if (this.username === 'admin' && this.password === '123') {
+                        isAuthenticated = true;
+                        isAdmin = true;
+                        this.isLoggedIn = true; // 更新响应式数据以更新 UI
+                        alert('管理员登录成功！');
+                        this.$router.push('/admin'); // 登录成功后跳转到管理员页面
+                    } else if (this.username === 'user' && this.password === '123') {
+                        isAuthenticated = true;
+                        isAdmin = false;
+                        this.isLoggedIn = true; // 更新响应式数据以更新 UI
+                        alert('普通用户登录成功！');
+                        this.$router.push('/private'); // 登录成功后跳转到私有页面
+                    } else {
+                        alert('用户名或密码错误！');
+                        this.username = '';
+                        this.password = '';
+                    }
+                },
+                logout() {
+                    isAuthenticated = false;
+                    isAdmin = false;
+                    this.isLoggedIn = false; // 更新响应式数据以更新 UI
+                    this.username = '';
+                    this.password = '';
+                    alert('已退出登录！');
+                    this.$router.push('/public'); // 退出登录后跳转到公开页面
+                }
+            },
+            watch: {
+                // 监听全局认证状态的变化并更新组件的 isLoggedIn
+                // 这里其实不是必要的，因为 login/logout 方法已经直接改了 isLoggedIn
+                isLoggedIn(newVal) {
+                    // 当 isLoggedIn 变化时，如果需要，可以执行一些操作
+                    // console.log('App isLoggedIn changed to:', newVal);
+                }
+            }
+        });
+
+        app.use(router);
+        app.mount('#app');
+    </script>
+</body>
+</html>
