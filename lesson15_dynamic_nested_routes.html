@@ -126,9 +126,9 @@
                     <!-- 通过 $route.params 访问动态路由参数 -->
                     <p>当前用户 ID: {{ $route.params.id }}</p>
                     <nav class="user-nav">
-                        <!-- 嵌套路由链接 (相对路径) -->
-                        <router-link :to="{ path: 'profile' }">用户资料</router-link>
-                        <router-link :to="{ path: 'posts' }">用户帖子</router-link>
+                            <!-- 嵌套路由链接 (命名路由写法，确保带 id 参数) -->
+                            <router-link :to="{ name: 'UserProfile', params: { id: $route.params.id } }">用户资料</router-link>
+                            <router-link :to="{ name: 'UserPosts', params: { id: $route.params.id } }">用户帖子</router-link>
                     </nav>
                     <!-- 嵌套路由的出口：子路由组件将渲染在这里 -->
                     <router-view></router-view>
@@ -173,9 +173,9 @@
                 // 它的 children 路由会在 UserDetail 的 <router-view> 中渲染。
                 children: [
                     // 当 /users/:id/profile 匹配成功时，UserProfile 会渲染在 UserDetail 的 <router-view> 中
-                    { path: 'profile', component: UserProfile }, // 相对路径 'profile' 相当于 /users/:id/profile
+                    { path: 'profile', component: UserProfile, name: 'UserProfile' }, // 添加 name 字段
                     // 当 /users/:id/posts 匹配成功时，UserPosts 会渲染在 UserDetail 的 <router-view> 中
-                    { path: 'posts', component: UserPosts }    // 相对路径 'posts' 相当于 /users/:id/posts
+                    { path: 'posts', component: UserPosts, name: 'UserPosts' }    // 添加 name 字段
                 ]
             }
         ];

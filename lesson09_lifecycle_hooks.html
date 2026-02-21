@@ -101,10 +101,8 @@
                 this.logLifecycle('根实例: beforeUpdate - (数据更新，但DOM未重新渲染)');
             },
             updated() {
-                // 使用 setTimeout 延迟日志记录，避免无限更新循环
-                setTimeout(() => {
-                    this.logChildLifecycle('子组件: updated');
-                }, 0);
+                // 不要在 updated 钩子里修改响应式数据，避免递归和报错
+                // 可以在这里做只读操作，如 console.log('根实例: updated');
             },
             beforeUnmount() {
                 // 实例销毁之前调用 (Vue 3 中 beforeDestroy 改名为 beforeUnmount)

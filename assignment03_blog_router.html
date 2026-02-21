@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阶段性作业 03 - 博客路由管理</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Vue Router (使用 CDN 方式，Vue Router 4 版本) -->
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        nav {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #0056b3;
+        }
+        nav a.router-link-active {
+            color: #28a745;
+            border-bottom: 2px solid #28a745;
+        }
+        .view-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            min-height: 150px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .page-content {
+            padding: 10px;
+            background-color: #eaf7ff;
+            border-left: 5px solid #007bff;
+            margin-bottom: 10px;
+        }
+        .login-section {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .login-section input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-section button {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .login-section button:hover {
+            background-color: #218838;
+        }
+        .login-section .logout-button {
+            background-color: #dc3545;
+        }
+        .login-section .logout-button:hover {
+            background-color: #c82333;
+        }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 5px; }
+        .post-detail { border: 1px dashed #007bff; padding: 15px; margin-top: 10px; }
+        .post-detail h3 { margin-top: 0; }
+        .post-edit-sub {
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #fff8e1;
+            border: 1px dashed orange;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>我的博客</h1>
+
+        <nav>
+            <router-link to="/">首页</router-link>
+            <router-link to="/posts">所有文章</router-link>
+            <router-link to="/dashboard">用户中心</router-link>
+            <router-link to="/admin">管理面板</router-link>
+            <!-- 示例：编辑第一篇文章，用于演示组件内守卫 -->
+            <router-link to="/posts/1/edit">编辑文章 1</router-link>
+        </nav>
+
+        <div class="login-section">
+            <template v-if="!isLoggedIn">
+                <p>模拟登录</p>
+                <input type="text" v-model="username" placeholder="用户名 (user/admin)">
+                <input type="password" v-model="password" placeholder="密码 (123)">
+                <button @click="login">登录</button>
+            </template>
+            <template v-else>
+                <p>已登录为: {{ username }} (角色: {{ isAdmin ? '管理员' : '普通用户' }})</p>
+                <button class="logout-button" @click="logout">退出登录</button>
+            </template>
+        </div>
+
+        <div class="view-container">
+            <!-- 路由出口：路由匹配到的组件将渲染在这里 -->
+            <router-view></router-view>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // 模拟认证状态 (TODO: 在实际应用中，这些状态应通过 Vuex/Pinia 管理)
+        let isAuthenticated = false; // 是否已登录
+        let isAdmin = false;         // 是否是管理员
+        let currentUsername = '';    // 当前登录的用户名
+        // =========================================================
+
+        // 1. 定义路由组件
+        const Home = {
+            template: `
+                <div class="page-content">
+                    <h2>欢迎来到博客</h2>
+                    <p>在这里，你可以找到最新的文章。</p>
+                    <p>请点击导航栏链接进行探索。</p>
+                </div>
+            `
+        };
+
+        const PostList = {
+            template: `
+                <div class="page-content">
+                    <h2>所有文章</h2>
+                    <ul>
+                        <li v-for="post in posts" :key="post.id">
+                            <router-link :to="'/posts/' + post.id">{{ post.title }}</router-link>
+                        </li>
+                    </ul>
+                </div>
+            `,
+            data() {
+                return {
+                    // TODO 2: 定义一个 posts 数组，包含 id 和 title
+                    posts: [
+                        { id: 1, title: 'Vue Router 入门' },
+                        { id: 2, title: 'Vue 组件通信技巧' },
+                        { id: 3, title: 'Vuex 状态管理' }
+                    ]
+                };
+            }
+        };
+
+        const PostDetail = {
+            template: `
+                <div class="page-content post-detail">
+                    <!--
+                        TODO 3: 显示当前文章的 ID，通过 $route.params.id 获取。
+                        显示文章标题和内容（可根据 id 模拟）。
+                    -->
+                    <h3>文章详情 - ID: {{ $route.params.id }}</h3>
+                    <p>文章标题: {{ post ? post.title : '加载中...' }}</p>
+                    <p>内容: {{ post ? post.content : '加载中...' }}</p>
+                    <button @click="editPost">编辑文章</button>
+                    <hr>
+                    <!--
+                        TODO 4: 如果有嵌套路由，这里需要一个 <router-view> 作为子路由的出口。
+                        当访问 /posts/:id/edit 时，PostEdit 组件将渲染在这里。
+                    -->
+                    <router-view></router-view>
+                </div>
+            `,
+            data() {
+                return {
+                    // 模拟从后端获取文章数据
+                    post: null
+                };
+            },
+            created() {
+                // TODO 5: 在组件创建时，根据 $route.params.id 获取文章详情。
+                // 模拟一个异步请求。
+                // 提示：可以调用一个方法，如 this.fetchPost(this.$route.params.id);
+                this.fetchPost(this.$route.params.id);
+            },
+            watch: {
+                // TODO 6: 侦听路由参数 $route.params.id 的变化，
+                // 当从 /posts/1 到 /posts/2 时，组件会被复用，但参数会变。
+                // 此时需要重新获取文章详情。
+                // 提示：`'$route.params.id'(newId, oldId) { ... }`
+                '$route.params.id'(newId, oldId) {
+                    this.fetchPost(newId); // 调用获取数据的方法
+                }
+            },
+            methods: {
+                fetchPost(id) {
+                    // 模拟数据获取
+                    this.post = {
+                        id: id,
+                        title: `文章标题 ${id}`,
+                        content: `这是文章 ${id} 的详细内容。`
+                    };
+                },
+                editPost() {
+                    // TODO 7: 使用编程式导航跳转到当前文章的编辑页面。
+                    // 提示：可以使用 `this.$router.push({ path: '/posts/' + this.$route.params.id + '/edit' });`
+                    // 或者使用命名路由：`this.$router.push({ name: 'post-edit', params: { id: this.$route.params.id } });`
+                    this.$router.push({ path: `/posts/${this.$route.params.id}/edit` });
+                }
+            }
+        };
+
+        const UserDashboard = {
+            template: `
+                <div class="page-content">
+                    <h2>用户中心</h2>
+                    <!-- TODO 14: 显示当前登录的用户名 (currentUsername) -->
+                    <p>欢迎，${currentUsername}！这里是您的私人仪表板。</p>
+                    <p>您是${isAdmin ? '管理员' : '普通用户'}。</p>
+                    <button @click="goToPosts">查看我的文章</button>
+                </div>
+            `,
+            methods: {
+                goToPosts() {
+                    // TODO 15: 使用编程式导航跳转到文章列表页。
+                    console.log('TODO: 实现 goToPosts 方法');
+                    this.$router.push('/posts');
+                }
+            },
+            data() {
+                return {
+                    username: currentUsername, // 显示当前登录的用户名
+                    isAdmin: isAdmin
+                };
+            }
+        };
+
+        const AdminPanel = {
+            template: `
+                <div class="page-content" style="border-left-color: red;">
+                    <h2>管理面板</h2>
+                    <!-- TODO 16: 显示当前登录的用户名 (currentUsername) -->
+                    <p>欢迎，${currentUsername}！这里是只有管理员才能访问的区域。</p>
+                    <button @click="viewAllUsers">查看所有用户</button>
+                </div>
+            `,
+            data() {
+                return {
+                    username: currentUsername
+                };
+            },
+            methods: {
+                viewAllUsers() {
+                    alert('TODO: 跳转到用户管理页面 (未实现)');
+                }
+            }
+        };
+
+        const PostEdit = {
+            template: `
+                <div class="page-content post-edit-sub">
+                    <h2>编辑文章 ID: {{ $route.params.id }}</h2>
+                    <p>您有未保存的更改吗？</p>
+                    <input type="text" v-model="editContent" @input="saved = false" style="width: 80%; margin-top: 10px;">
+                    <button @click="saveContent">保存更改</button>
+                    <button @click="this.$router.back()">返回</button>
+                </div>
+            `,
+            data() {
+                return {
+                    editContent: '这是文章的编辑内容...', // 初始内容
+                    saved: true // 跟踪是否有未保存的更改
+                };
+            },
+            methods: {
+                saveContent() {
+                    alert('内容已保存！');
+                    this.saved = true;
+                }
+            },
+            // TODO 8: 实现组件内路由守卫 beforeRouteLeave
+            // 提示：如果 `this.saved` 为 false，则弹出确认框阻止离开。
+            beforeRouteLeave(to, from, next) {
+                console.log('TODO: 实现 beforeRouteLeave 守卫');
+                if (!this.saved) {
+                    const answer = window.confirm('你确定要离开吗？你有未保存的更改！');
+                    if (answer) {
+                        next(); // 确认离开
+                    } else {
+                        next(false); // 取消离开
+                    }
+                } else {
+                    next(); // 没有未保存的更改，直接离开
+                }
+            }
+        };
+
+        // 2. 定义路由表
+        const routes = [
+            { path: '/', component: Home },
+            // TODO 9: 添加 /posts 路由，渲染 PostList 组件
+            { path: '/posts', component: PostList },
+            // TODO 10: 添加 /posts/:id 动态路由，渲染 PostDetail 组件
+            {
+                path: '/posts/:id', // 动态路由
+                component: PostDetail,
+                // TODO 11: 在 /posts/:id 路由下，添加嵌套路由 'edit'，渲染 PostEdit 组件
+                children: [
+                    { 
+                        path: 'edit', 
+                        component: PostEdit,
+                        meta: {requiresAuth: true, title: '编辑'}
+                    } // 示例
+                ]
+            },
+            {
+                path: '/dashboard',
+                component: UserDashboard,
+                meta: { requiresAuth: true, title: '用户中心' } // 需要登录
+            },
+            {
+                path: '/admin',
+                component: AdminPanel,
+                meta: { requiresAuth: true, requiresAdmin: true, title: '管理面板' } // 需要管理员权限
+            }
+        ];
+
+        // 3. 创建路由实例
+        const router = VueRouter.createRouter({
+            history: VueRouter.createWebHashHistory(), // 使用 Hash 模式，方便本地运行
+            routes
+        });
+
+        // =========================================================
+        // TODO 12: 实现全局前置守卫 router.beforeEach
+        // 提示：检查 to.meta.requiresAuth 和 to.meta.requiresAdmin 属性。
+        // 根据 isAuthenticated 和 isAdmin 变量进行重定向或放行。
+        // 登录页面可以重定向到 /posts 或 /。
+        router.beforeEach((to, from, next) => {
+            console.log('TODO: 实现全局前置守卫');
+            // 检查是否需要登录
+            if (to.meta.requiresAuth && !isAuthenticated) {
+                alert('该页面需要登录才能访问！');
+                next('/posts'); // 重定向到文章列表页
+            } else if (to.meta.requiresAdmin && !isAdmin) {
+                alert('该页面需要管理员权限才能访问！');
+                next('/dashboard'); // 重定向到用户中心
+            } else {
+                next(); // 继续导航
+            }
+        });
+
+        // TODO 13 (可选): 实现全局后置钩子 router.afterEach
+        // 提示：可以用于修改页面标题 document.title。
+        router.afterEach((to, from) => {
+            document.title = to.meta.title || (to.path === '/' ? '首页' : to.path.substring(1).toUpperCase()); // 示例
+        });
+        // =========================================================
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    username: '',
+                    password: '',
+                    isLoggedIn: isAuthenticated, // 从模拟状态初始化
+                    isAdmin: isAdmin
+                };
+            },
+            methods: {
+                login() {
+                    // TODO 17: 实现登录逻辑。
+                    // 根据用户名和密码更新 isAuthenticated, isAdmin, currentUsername 变量。
+                    // 使用 this.$router.push() 进行编程式导航，登录成功后跳转到 /dashboard 或 /admin。
+                    if (this.username === 'user' && this.password === '123') {
+                        isAuthenticated = true;
+                        currentUsername = this.username;
+                        this.isLoggedIn = true;
+                        this.isAdmin = false; // 明确设置为普通用户
+                        alert('普通用户登录成功！');
+                        this.$router.push('/dashboard');
+                    } else if (this.username === 'admin' && this.password === '123') {
+                        isAuthenticated = true;
+                        isAdmin = true;
+                        currentUsername = this.username;
+                        this.isLoggedIn = true;
+                        this.isAdmin = true;
+                        alert('管理员登录成功！');
+                        this.$router.push('/admin');
+                    } else {
+                        alert('用户名或密码错误！');
+                        this.username = '';
+                        this.password = '';
+                    }
+                },
+                logout() {
+                    // TODO 18: 实现退出登录逻辑。
+                    // 重置 isAuthenticated, isAdmin, currentUsername 变量。
+                    // 使用 this.$router.push() 导航到 /posts 或 /。
+                    console.log('TODO: 实现退出登录逻辑');
+                    isAuthenticated = false;
+                    isAdmin = false;
+                    currentUsername = '';
+                    this.isLoggedIn = false;
+                    this.isAdmin = false;
+                    alert('已退出登录！');
+                    this.$router.push('/posts'); // 退出登录后导航到文章列表
+                }
+            },
+            watch: {
+                // 监听 isLoggedIn 变化，更新全局 isAuthenticated 状态，并强制 router 重新检查守卫
+                isLoggedIn(newVal) {
+                    isAuthenticated = newVal;
+                    // 如果需要，可以在这里强制 router 重新检查守卫，以更新导航状态
+                    // 例如：router.replace(router.currentRoute.value.fullPath);
+                },
+                isAdmin(newVal) {
+                    isAdmin = newVal;
+                }
+            }
+        });
+
+        // 4. 将路由实例挂载到 Vue 应用实例上
+        app.use(router);
+
+        // 5. 挂载 Vue 应用到 DOM
+        app.mount('#app');
+    </script>
+</body>
+</html>
