@@ -107,7 +107,6 @@
             <router-link to="/dashboard">用户中心</router-link>
             <router-link to="/admin">管理面板</router-link>
             <!-- 示例：编辑第一篇文章，用于演示组件内守卫 -->
-            <router-link to="/posts/1/edit">编辑文章 1</router-link>
         </nav>
 
         <div class="login-section">
@@ -270,7 +269,7 @@
             },
             methods: {
                 viewAllUsers() {
-                    alert('TODO: 跳转到用户管理页面 (未实现)');
+                    this.$router.push({ path: `/admin/users` });
                 }
             }
         };
@@ -314,6 +313,15 @@
             }
         };
 
+        const ListUsers = {
+            template: `
+                <div class="list-users">admin</div>
+                <div class="list-users">user</div>
+                <br>
+                <button @click="this.$router.back()">返回</button>
+            `
+        }
+
         // 2. 定义路由表
         const routes = [
             { path: '/', component: Home },
@@ -341,6 +349,10 @@
                 path: '/admin',
                 component: AdminPanel,
                 meta: { requiresAuth: true, requiresAdmin: true, title: '管理面板' } // 需要管理员权限
+            },
+            {
+                path: '/admin/users',
+                component: ListUsers
             }
         ];
 

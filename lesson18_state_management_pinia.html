@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>状态管理 (Pinia) - Lesson 18</title>
+    <!-- 引入 Vue.js (使用 CDN 方式，Vue 3 版本) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Pinia (使用 CDN 方式) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pinia/2.1.7/pinia.global.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        #app {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .box {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 20px; }
+        h3 { color: #555; }
+        p { line-height: 1.6; }
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+        .counter-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: #d81b60;
+            margin-top: 10px;
+        }
+        .user-info {
+            background-color: #ffe0b2;
+            padding: 10px;
+            border-left: 3px solid #ff9800;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>状态管理 (Pinia)</h1>
+
+        <div class="box">
+            <h2>根组件中的状态</h2>
+            <p>根组件内部计数: {{ localCount }}</p>
+            <button @click="localCount++">增加根组件计数</button>
+            <hr>
+            <p>通过 Store 访问计数: <span class="counter-display">{{ counterStore.count }}</span></p>
+            <p>通过 Store 访问双倍计数 (Getter): <span class="counter-display">{{ counterStore.doubleCount }}</span></p>
+            <button @click="counterStore.increment()">增加 Store 计数 (Action)</button>
+            <button @click="counterStore.incrementBy(5)">增加 Store 计数 (Action, +5)</button>
+            <button @click="counterStore.decrement()">减少 Store 计数 (Action)</button>
+        </div>
+
+        <div class="box">
+            <h2>不同组件中使用 Store (MyComponent)</h2>
+            <my-component></my-component>
+        </div>
+
+        <div class="box">
+            <h2>用户模块 Store (UserDisplay)</h2>
+            <user-display></user-display>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 在这里添加一个检查，如果 Pinia 仍然未定义，则输出明确的错误信息
+            if (typeof Pinia === 'undefined') {
+                console.error("Pinia 库未加载。请检查 CDN 链接、网络连接或浏览器控制台是否有相关错误。");
+                return; // 阻止代码继续执行，避免 ReferenceError
+            }
+
+            // 1. 创建 Pinia 实例
+            const pinia = Pinia.createPinia();
+
+            // 2. 定义 Store (类似 Vuex 的 Module)
+            // Counter Store (计数器模块)
+            const useCounterStore = Pinia.defineStore('counter', {
+                // state 选项：定义响应式状态，必须是一个函数，返回一个对象
+                state: () => ({
+                    count: 0
+                }),
+                // getters 选项：定义基于状态的派生状态 (类似 computed)
+                getters: {
+                    doubleCount: (state) => state.count * 2,
+                    // getters 也可以访问其他 getters
+                    // tripleCount: (state) => state.count * 3
+                },
+                // actions 选项：定义用于修改状态的方法 (类似 methods)
+                // actions 可以是异步的，也可以包含业务逻辑，可以直接修改 state
+                actions: {
+                    increment() {
+                        this.count++;
+                    },
+                    incrementBy(amount) {
+                        this.count += amount;
+                    },
+                    decrement() {
+                        this.count--;
+                    },
+                    // 异步 action 示例
+                    async asyncIncrement() {
+                        // await someAPI.call();
+                        this.count++;
+                    }
+                }
+            });
+
+            // User Store (用户模块，演示多个 Store)
+            const useUserStore = Pinia.defineStore('user', {
+                state: () => ({
+                    name: '匿名用户',
+                    age: 0
+                }),
+                getters: {
+                    // getters 可以访问其他 Store 的 getter (不建议直接访问 state，因为可能循环依赖)
+                    isAdult: (state) => state.age >= 18,
+                    // 访问其他 Store 的 getter 示例
+                    // counter: (state) => useCounterStore().count
+                },
+                actions: {
+                    setName(newName) {
+                        this.name = newName;
+                    },
+                    setAge(newAge) {
+                        this.age = newAge;
+                    }
+                }
+            });
+
+
+            // Vue 组件中使用 Store
+            const MyComponent = {
+                template: `
+                    <div class="box" style="background-color: #e0f2ff; border-color: #007bff;">
+                        <h3>子组件中的计数器</h3>
+                        <p>通过 Store 访问计数: <span class="counter-display">{{ counterStore.count }}</span></p>
+                        <p>通过 Store 访问双倍计数 (Getter): <span class="counter-display">{{ counterStore.doubleCount }}</span></p>
+                        <button @click="counterStore.increment()">增加 Store 计数 (Action)</button>
+                    </div>
+                `,
+                setup() {
+                    // 在 setup 中使用 Store
+                    // useCounterStore() 会返回一个 Store 实例
+                    const counterStore = useCounterStore();
+
+                    // setup 返回的对象会暴露给模板
+                    return {
+                        counterStore
+                    };
+                }
+            };
+
+            const UserDisplay = {
+                template: `
+                    <div class="user-info">
+                        <h3>用户信息</h3>
+                        <p>姓名: {{ userStore.name }}</p>
+                        <p>年龄: {{ userStore.age }}</p>
+                        <p>是否成年: {{ userStore.isAdult ? '是' : '否' }}</p>
+                        <button @click="changeUserName">更改姓名</button>
+                        <button @click="changeUserAge">更改年龄</button>
+                        <p>其他 Store 的计数: {{ counterStore.count }}</p>
+                    </div>
+                `,
+                setup() {
+                    const userStore = useUserStore();
+                    const counterStore = useCounterStore(); // 可以在不同组件中访问不同的 store
+
+                    const changeUserName = () => {
+                        const newName = prompt('请输入新姓名:', userStore.name);
+                        if (newName) userStore.setName(newName);
+                    };
+
+                    const changeUserAge = () => {
+                        const newAge = prompt('请输入新年龄:', userStore.age);
+                        if (newAge && !isNaN(newAge)) userStore.setAge(parseInt(newAge));
+                    };
+
+                    return {
+                        userStore,
+                        counterStore, // 暴露给模板
+                        changeUserName,
+                        changeUserAge
+                    };
+                }
+            };
+
+
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        localCount: 0
+                    };
+                },
+                setup() {
+                    // 在根组件的 setup 中使用 Store
+                    const counterStore = useCounterStore();
+                    const userStore = useUserStore(); // 也可以在根组件使用
+
+                    return {
+                        counterStore,
+                        userStore
+                    };
+                },
+                components: {
+                    MyComponent,
+                    UserDisplay
+                }
+            });
+
+            // 3. 将 Pinia 挂载到 Vue 应用实例上
+            app.use(pinia);
+
+            // 4. 挂载 Vue 应用到 DOM
+            app.mount('#app');
+        }); // DOMContentLoaded 结束
+    </script>
+</body>
+</html>
